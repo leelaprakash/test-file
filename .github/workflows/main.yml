@@ -45,7 +45,7 @@ jobs:
         aws-region: ${{ env.AWS_REGION }}
     - name: Build, tag, and push image to Amazon ECR
       run: |
-        aws ecs describe-task-definition --task-definition ${{ inputs.task-definition }} --query taskDefinition > /home/runner/work/task-definition.json
+        aws ecs describe-task-definition --task-definition first-run-task-definition --query taskDefinition > /home/runner/work/task-definition.json
     - name: teststes
       run: |
         ls -lrta /home/runner/work/
