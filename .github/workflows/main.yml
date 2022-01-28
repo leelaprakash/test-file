@@ -44,16 +44,25 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
     - name: Build, tag, and push image to Amazon ECR
+      id: ecs-task-def
       run: |
         aws ecs describe-task-definition --task-definition first-run-task-definition --query taskDefinition > /home/runner/work/task-definition.json
+        echo "::set-output name=task_definition_image::$(aws ecs describe-task-definition --task-definition first-run-task-definition --query taskDefinition.containerDefinitions[0].name)"
     - name: teststes
       run: |
         ls -lrta /home/runner/work/
         cat /home/runner/work/task-definition.json
     - name: Fill in the new image ID in the Amazon ECS task definition
+      id: task-def
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
         task-definition: /home/runner/work/task-definition.json
-        container-name: "nginx"
+        container-name: ${{ steps.ecs-task-def.outputs.task_definition_image }}
         image: "182093768440.dkr.ecr.ap-south-1.amazonaws.com/leela-test-gh-actions:f03e414a9aa"        
-   
+    - name: Deploy Amazon ECS task definition  
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: ${{ steps.task-def.outputs.task-definition }}
+        service: ${{ env.ECS_SERVICE }}
+        cluster: ${{ env.ECS_CLUSTER }}
+        wait-for-service-stability: false   
